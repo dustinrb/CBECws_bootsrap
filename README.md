@@ -28,3 +28,9 @@ export QCRSH=ssh
 export QCMPI=openmpi
 export PATH=$PATH:$QC/bin:$QC/bin/perl
 ```
+
+## Development Environment
+
+For convenience, I would recommend setting up ASC SSH Jump server so you don't have to VPN in. (https://osuasc.teamdynamix.com/TDClient/1929/Portal/KB/ArticleDet?ID=29849)
+
+I would suggest suing VSCode with the 'Remote-SSH' plugin. I would also suggest using the clangd autocomplete plugin instead of VSCode's Intelisense but this requires some additional setup.
