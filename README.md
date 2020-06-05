@@ -2,7 +2,7 @@
 
 ## Quickstart
 
-To compile QChem on the workstations in the offices, simply clone this repository into your home directory and run:
+To compile QChem on the workstations in the office, just clone this repository into your home directory and run:
 
 ``` sh
 bash ~/CBECws_bootstrap/build_qchem.sh 
@@ -10,7 +10,7 @@ bash ~/CBECws_bootstrap/build_qchem.sh
 
 and wait...
 
-QChem will be installed into "/var/home/scratch/$USER/env/bin" from it's build directory in "/var/home/scratch/$USER/env/src/qchem"
+QChem will be installed into "/var/home/scratch/$USER/env/bin" from its build directory in "/var/home/scratch/$USER/env/src/qchem"
 
 You can add this to your path by putting this code into your "~/bashrc" file:
 
@@ -31,6 +31,6 @@ export PATH=$PATH:$QC/bin:$QC/bin/perl
 
 ## Development Environment
 
-For convenience, I would recommend setting up ASC SSH Jump server so you don't have to VPN in. (https://osuasc.teamdynamix.com/TDClient/1929/Portal/KB/ArticleDet?ID=29849)
+For convenience, I would recommend setting up access through the ASC SSH Jump server so you don't have to VPN in. (https://osuasc.teamdynamix.com/TDClient/1929/Portal/KB/ArticleDet?ID=29849)
 
-I would suggest suing VSCode with the 'Remote-SSH' plugin. I would also suggest using the clangd autocomplete plugin instead of VSCode's Intelisense but this requires some additional setup.
+I would also suggest using VSCode with the 'Remote-SSH' plugin and the `clangd` autocomplete plugin instead of VSCode's Intelisense. This will require some additional setup.
