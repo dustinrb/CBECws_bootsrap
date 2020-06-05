@@ -7,7 +7,7 @@ fi
 
 cd $SRC_PATH
 
-if [ ! -f "git" ]; then
+if [ ! -d "git" ]; then
     git clone https://github.com/git/git.git
 fi
 

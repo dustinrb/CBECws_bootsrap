@@ -7,7 +7,7 @@ fi
 
 cd $SRC_PATH
 
-if [ ! -f "fish-shell" ]; then
+if [ ! -d "fish-shell" ]; then
     git clone https://github.com/fish-shell/fish-shell.git
 fi
 

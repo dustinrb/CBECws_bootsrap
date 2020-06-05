@@ -1,6 +1,11 @@
 # Change to this script's location
-cd `dirname $0`
+old_path=`pwd`
 
-source ./paths.sh   # Paths for the workstation
-source ./modules.sh # Required modules
-source ./dev.sh     # Compiler variabls
+cd `dirname ${BASH_SOURCE[0]}`
+# cd `dirname $0`
+
+source ./env/paths.sh   # Paths for the workstation
+source ./env/modules.sh # Required modules
+source ./env/dev.sh     # Compiler variabls
+
+cd $old_path

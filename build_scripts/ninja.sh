@@ -8,7 +8,7 @@ fi
 cd $SRC_PATH
 ml cmake
 
-if [ ! -f "ninja" ]; then
+if [ ! -d "ninja" ]; then
     git clone https://github.com/ninja-build/ninja.git
 fi
 

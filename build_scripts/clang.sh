@@ -9,7 +9,7 @@ cd $SRC_PATH
 ml gcc/7.3
 export PATH=$ENV_PATH/bin:$PATH
 
-if [ ! -f "llvm-project" ]; then
+if [ ! -d "llvm-project" ]; then
     git clone https://github.com/llvm/llvm-project.git
 fi
 

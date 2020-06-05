@@ -9,7 +9,6 @@ boost_version="1.67"
 # IMPORT THE MODULES
 module load intel/$intel_version $mpi_flavor/$mpi_version
 module load \
-    mkl/$mkl_version
-    python/$python_version \
+    mkl/$mkl_version \
     boost/$boost_version \
     cmake

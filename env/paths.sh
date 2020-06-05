@@ -1,10 +1,10 @@
 # SETUP PATHS
-export SCRATCH_PATH=/var/home/scratch/$ENV_PATH
+export SCRATCH_PATH=/var/home/scratch/$USER
 export ENV_PATH=$SCRATCH_PATH/env
 export SRC_PATH=$ENV_PATH/src
 
 # ENV_PATH will the the working directory for our scripts
-mkdir -p SRC_PATH
+mkdir -p $SRC_PATH
 
 # LINK THE ENV PATH TO $HOME FOR CONVENIENCE
 if [ ! -h $src_target ]; then

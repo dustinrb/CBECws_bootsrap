@@ -8,10 +8,12 @@ fi
 
 cd $SRC_PATH
 
-if [ ! -f "qchem" ] && [ ! -f "qcaux" ]; then
+if [ ! -d "qchem" ]; then
   # Get source
   svn co https://jubilee.q-chem.com/svnroot/qchem/trunk qchem
+fi
 
+if [ ! -d "qcaux" ]; then
   # Setup qcaux while we are here
   svn co https://jubilee.q-chem.com/svnroot/qcaux/trunk qcaux
   cd qcaux
@@ -20,17 +22,20 @@ if [ ! -f "qchem" ] && [ ! -f "qcaux" ]; then
   cd $SRC_PATH
 fi
 
-# PICK BETWEEN NINJA OR MAKE
-BUILD_TOOL = make
-# Prefere ninja if available (SEE build_scripts/ninja.sh script)
+cd qchem
+
+# USE ninja IF AVAILABLE
 if [ -x "$(command -v ninja)" ]; then
-  BUILD_TOOL = ninja
+  BUILD_TOOL=ninja
 fi
 
 # DO ACTUAL BUILD
-./configure intel mkl openmp relwdeb nointracule nomgc nodmrg noccman2 $BUILD_TOOL
+if [ ! -d "build" ]; then
+  ./configure intel mkl openmp relwdeb nointracule nomgc nodmrg noccman2 $BUILD_TOOL
+fi
 cd build
 
 # SET INSTALL DIRECTORY AND CREATE compile_commands.js FOR clangd
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=YES -DCMAKE_INSTALL_PREFIX=$ENV_PATH ..
-cd cmake --build . -- -j 8 # Build with 8 threads
+cmake --build . -- -j 8 # Build with 8 threads
+cmake --install .
