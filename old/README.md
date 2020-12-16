@@ -21,8 +21,8 @@ You can add this to your path by putting this code into your "~/bashrc" file:
 source $HOME/CBECws_bootstrap/load_env.sh
 
 # Setup QCHEM
-export QC=$SRC_PATH/src/qchem
-export QCAUX=$SRC_PATH/src/qcaux
+export QC=$SRC_PATH/qchem
+export QCAUX=$SRC_PATH/qcaux
 export QCSCRATCH=$SRC_PATH/tmp/qchem
 export QCRSH=ssh
 export QCMPI=openmpi
