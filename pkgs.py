@@ -52,19 +52,57 @@ def qchem(version="trunk"):
         build_cmd=[
             "cmake -B $pkg_build_path -DCMAKE_EXPORT_COMPILE_COMMANDS=YES $pkg_src",
             "cmake --build $pkg_build_path -- -j $nprocs",
-            "sed  -i 's/-qopenmp/-fopenmp/g' $pkg_build_path/compile_commands.json",
-            "ln -s $pkg_build_path/compile_commands.json $pkg_src/"
+            "clangify_compile_commands.py $pkg_build_path/compile_commands.json > $pkg_src/compile_commands.json",
+        ],
+        install_cmd=[
+            "cmake --install $pkg_build_path",
+            "[[ ! -L $pkg_install_path/bin/mpi ]] && ln -s $pkg_src/bin/mpi $pkg_install_path/bin/mpi"
         ],
         required_pkgs=["intel", "mkl"],
         required_build_pkgs=["cmake"],
+    )
+
+def qchem_dailyref(version="trunk"):
+    SVN_ROOT = "https://jubilee.q-chem.com/svnroot/qchem_dailyref"
+
+    # Choose the correct branching information 
+    version = version.strip()
+    if version == "trunk":
+        source_url = "{}/{}".format(SVN_ROOT, version)         
+    else:
+        source_url = "{}/branches/{}".format(SVN_ROOT, version)
+
+    return BuildJob(
+        "qchem_dailyref",
+        version,
+        source_cmd="svn co {} $pkg_src".format(source_url),
+        configure_cmd="",
+        build_cmd="",
+        install_cmd=[
+            "mkdir -p $ENV_PATH/qchem_dailyref",
+            "[[ ! -L $pkg_install_path ]] && ln -s $pkg_src $pkg_install_path",
+            "svn up $pkg_src"
+        ],
+        required_pkgs=[],
+        required_build_pkgs=[],
+    )
+
+def gcc_compatibility(version="7.3"):
+    return BuildJob(
+        "gcc_compatibility",
+        version,
+        source_cmd="mkdir -p $pkg_src",
+        configure_cmd="",
+        build_cmd="",
+        install_cmd=""
     )
 
 def clangd(version="11.0.0"):
     return BuildJob(
         "clangd",
         version,
-        required_build_pkgs=["cmake"],
-        required_pkgs=["gcc"],
+        required_build_pkgs=["cmake", "gcc"],
+        required_pkgs=["gcc_compatibility"],
         source_cmd="git clone --branch llvmorg-$pkg_version https://github.com/llvm/llvm-project.git $pkg_src",
         configure_cmd=[
             "CC=gcc CXX=g++ cmake -G\"$pkg_cmake_build_tool\" "
@@ -135,6 +173,19 @@ def julia(version="1.5.3"):
         ]
     ) 
 
+def qcaux(version="trunk"):
+    return BuildJob(
+        "qcaux",
+        version,
+        source_cmd=[
+            "svn co https://jubilee.q-chem.com/svnroot/qcaux/trunk $pkg_install_path",
+            "wget https://downloads.q-chem.com/qcinstall/drivers/drivers.linux.tar.gz -P $pkg_install_path/"
+        ],
+        configure_cmd="",
+        build_cmd="",
+        install_cmd="tar xzf $pkg_install_path/drivers.linux.tar.gz -C $pkg_install_path"
+    ) 
+
 PKGS = {
     "fragment": fragment,
     "qchem": qchem,
@@ -143,5 +194,8 @@ PKGS = {
     "fish": fish,
     "ninja": ninja,
     "julia": julia,
-    "eigen": eigen
+    "eigen": eigen,
+    "qcaux": qcaux,
+    "gcc_compatibility": gcc_compatibility,
+    "qchem_dailyref": qchem_dailyref
 }

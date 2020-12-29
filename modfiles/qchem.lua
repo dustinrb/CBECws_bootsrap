@@ -5,8 +5,11 @@ local pkgName  = myModuleName()
 local pkg_path = pathJoin(env_path,pkgName,version)
 
 prereq("intel", "mkl")
+load("qcaux")
+try_load("qchem_dailyref")
 
 prepend_path("PATH", pathJoin(pkg_path, "bin"))
 pushenv("QC", pkg_path)
-pushenv("QCAUX", pathJoin(env_path, "qcaux"))
 pushenv("QCSCRATCH", pathJoin(scratch_path, "tmp", "qchem"))
+setenv("QCRSH", "ssh")
+setenv("QCPLATFORM", "LINUX_Ix86_64")
