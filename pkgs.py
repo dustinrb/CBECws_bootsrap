@@ -2,6 +2,30 @@ from BuildRunner import BuildRunner, PrintRunner, BashRunner
 from BuildJob import BuildJob
 from LMod import is_loaded
 
+
+def clangd(version="11.0.0"):
+    return BuildJob(
+        "clangd",
+        version,
+        required_build_pkgs=["cmake", "gcc"],
+        required_pkgs=["gcc_compatibility"],
+        source_cmd="git clone --branch llvmorg-$pkg_version https://github.com/llvm/llvm-project.git $pkg_src",
+        configure_cmd=[
+            "CC=gcc CXX=g++ cmake -G\"$pkg_cmake_build_tool\" "
+            "-B $pkg_build_path "
+            "-DCMAKE_INSTALL_PREFIX=$pkg_install_path "
+            "-DLLVM_ENABLE_PROJECTS='clang;clang-tools-extra' "
+            "-DLLVM_TARGETS_TO_BUILD=\"X86\" "
+            "-DCMAKE_BUILD_TYPE=Release "
+            "-DLLVM_BUILD_EXAMPLES=OFF " 
+            "-DLLVM_INCLUDE_EXAMPLES=OFF "
+            "-DLLVM_BUILD_TESTS=OFF "
+            "-DLLVM_INCLUDE_TESTS=OFF "
+            "-DLLVM_INCLUDE_BENCHMARKS=OFF "
+            "$pkg_src/llvm"
+        ],
+    )
+
 def eigen(version="3.3.9"):
     return BuildJob(
         "eigen",
@@ -10,6 +34,17 @@ def eigen(version="3.3.9"):
         source_cmd="git clone --branch $pkg_version https://gitlab.com/libeigen/eigen.git $pkg_src",
         configure_cmd="cmake -B $pkg_build_path -G\"$pkg_cmake_build_tool\" -DCMAKE_INSTALL_PREFIX=$pkg_install_path $pkg_src",
     )
+
+
+def fish(version="3.1.2"):
+    return BuildJob(
+        "fish",
+        version,
+        required_build_pkgs=["cmake", "intel"],
+        source_cmd="git clone --branch $pkg_version https://github.com/fish-shell/fish-shell.git $pkg_src",
+        configure_cmd="CC=gcc CXX=g++ cmake -B $pkg_build_path -G\"$pkg_cmake_build_tool\" -DCMAKE_INSTALL_PREFIX=$pkg_install_path $pkg_src",
+    )
+
 
 def fragment(version="master"):
     return BuildJob(
@@ -25,6 +60,31 @@ def fragment(version="master"):
             "ln -s $pkg_build_path/compile_commands.json $pkg_src/"
         ]
     )
+
+
+def gcc_compatibility(version="7.3"):
+    return BuildJob(
+        "gcc_compatibility",
+        version,
+        source_cmd="mkdir -p $pkg_src",
+        configure_cmd="",
+        build_cmd="",
+        install_cmd=""
+    )
+
+def qcaux(version="trunk"):
+    return BuildJob(
+        "qcaux",
+        version,
+        source_cmd=[
+            "svn co https://jubilee.q-chem.com/svnroot/qcaux/trunk $pkg_install_path",
+            "wget https://downloads.q-chem.com/qcinstall/drivers/drivers.linux.tar.gz -P $pkg_install_path/"
+        ],
+        configure_cmd="",
+        build_cmd="",
+        install_cmd="tar xzf $pkg_install_path/drivers.linux.tar.gz -C $pkg_install_path"
+    ) 
+
 
 def qchem(version="trunk"):
     SVN_ROOT = "https://jubilee.q-chem.com/svnroot/qchem"
@@ -62,6 +122,7 @@ def qchem(version="trunk"):
         required_build_pkgs=["cmake"],
     )
 
+
 def qchem_dailyref(version="trunk"):
     SVN_ROOT = "https://jubilee.q-chem.com/svnroot/qchem_dailyref"
 
@@ -87,38 +148,6 @@ def qchem_dailyref(version="trunk"):
         required_build_pkgs=[],
     )
 
-def gcc_compatibility(version="7.3"):
-    return BuildJob(
-        "gcc_compatibility",
-        version,
-        source_cmd="mkdir -p $pkg_src",
-        configure_cmd="",
-        build_cmd="",
-        install_cmd=""
-    )
-
-def clangd(version="11.0.0"):
-    return BuildJob(
-        "clangd",
-        version,
-        required_build_pkgs=["cmake", "gcc"],
-        required_pkgs=["gcc_compatibility"],
-        source_cmd="git clone --branch llvmorg-$pkg_version https://github.com/llvm/llvm-project.git $pkg_src",
-        configure_cmd=[
-            "CC=gcc CXX=g++ cmake -G\"$pkg_cmake_build_tool\" "
-            "-B $pkg_build_path "
-            "-DCMAKE_INSTALL_PREFIX=$pkg_install_path "
-            "-DLLVM_ENABLE_PROJECTS='clang;clang-tools-extra' "
-            "-DLLVM_TARGETS_TO_BUILD=\"X86\" "
-            "-DCMAKE_BUILD_TYPE=Release "
-            "-DLLVM_BUILD_EXAMPLES=OFF " 
-            "-DLLVM_INCLUDE_EXAMPLES=OFF "
-            "-DLLVM_BUILD_TESTS=OFF "
-            "-DLLVM_INCLUDE_TESTS=OFF "
-            "-DLLVM_INCLUDE_BENCHMARKS=OFF "
-            "$pkg_src/llvm"
-        ],
-    )
 
 def git(version="2.29.2"):
     return BuildJob(
@@ -131,28 +160,6 @@ def git(version="2.29.2"):
         install_cmd="make -C $pkg_src prefix=$pkg_install_path install"
     )
 
-def fish(version="3.1.2"):
-    return BuildJob(
-        "fish",
-        version,
-        required_build_pkgs=["cmake", "intel"],
-        source_cmd="git clone --branch $pkg_version https://github.com/fish-shell/fish-shell.git $pkg_src",
-        configure_cmd="CC=gcc CXX=g++ cmake -B $pkg_build_path -G\"$pkg_cmake_build_tool\" -DCMAKE_INSTALL_PREFIX=$pkg_install_path $pkg_src",
-    )
-
-def ninja(version="1.10.2"):
-    return BuildJob(
-        "ninja",
-        version,
-        required_build_pkgs=["cmake", "gcc"],
-        source_cmd="wget https://github.com/ninja-build/ninja/releases/download/v$pkg_version/ninja-linux.zip -P $pkg_src",
-        configure_cmd="",
-        build_cmd="",
-        install_cmd=[
-            "mkdir -p $pkg_install_path/bin",
-            "unzip $pkg_src/ninja-linux.zip -d $pkg_install_path/bin/"
-        ]
-    ) 
 
 def julia(version="1.5.3"):
     v_parts = version.split('.')
@@ -171,31 +178,19 @@ def julia(version="1.5.3"):
             "mkdir -p $pkg_install_path",
             "tar -xf $pkg_src/julia-$pkg_version-linux-x86_64.tar.gz -C $pkg_install_path"
         ]
-    ) 
+    )
 
-def qcaux(version="trunk"):
+
+def ninja(version="1.10.2"):
     return BuildJob(
-        "qcaux",
+        "ninja",
         version,
-        source_cmd=[
-            "svn co https://jubilee.q-chem.com/svnroot/qcaux/trunk $pkg_install_path",
-            "wget https://downloads.q-chem.com/qcinstall/drivers/drivers.linux.tar.gz -P $pkg_install_path/"
-        ],
+        required_build_pkgs=["cmake", "gcc"],
+        source_cmd="wget https://github.com/ninja-build/ninja/releases/download/v$pkg_version/ninja-linux.zip -P $pkg_src",
         configure_cmd="",
         build_cmd="",
-        install_cmd="tar xzf $pkg_install_path/drivers.linux.tar.gz -C $pkg_install_path"
+        install_cmd=[
+            "mkdir -p $pkg_install_path/bin",
+            "unzip $pkg_src/ninja-linux.zip -d $pkg_install_path/bin/"
+        ]
     ) 
-
-PKGS = {
-    "fragment": fragment,
-    "qchem": qchem,
-    "clangd": clangd,
-    "git": git,
-    "fish": fish,
-    "ninja": ninja,
-    "julia": julia,
-    "eigen": eigen,
-    "qcaux": qcaux,
-    "gcc_compatibility": gcc_compatibility,
-    "qchem_dailyref": qchem_dailyref
-}

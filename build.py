@@ -1,6 +1,7 @@
 #! /usr/bin/python3
-from pkgs import PKGS
+import pkgs
 from BuildRunner import PrintRunner, BashRunner
+
 
 if __name__ == "__main__":
     import argparse
@@ -16,16 +17,21 @@ if __name__ == "__main__":
     pkg = args.package
     version = args.version
     run_build = args.build
-    if not pkg in PKGS.keys():
+
+    try:
+        pkg_fn = getattr(pkgs, pkg)
+    except:
         print("The package \"{}\" does not exist. The available packages are:".format(pkg))
-        for p in PKGS.keys():
-            print("\t{}".format(p))
+        for name, fn in vars(pkgs).items():
+            mod = getattr(fn, "__module__", "")
+            if mod == pkgs.__name__:
+                print("  ", name)
         exit()
 
     if version is None: 
-        builder = PKGS[pkg]()
+        builder = pkg_fn()
     else:
-        builder = PKGS[pkg](version[0])
+        builder = pkg_fn(version[0])
 
     if run_build:
         builder.runner = BashRunner()
