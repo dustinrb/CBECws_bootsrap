@@ -23,7 +23,9 @@ def is_env_setup(required=REQUIRED_ENV):
 def listify(var):
     if isinstance(var, list):
         return var
-    return [var]
+    if var:
+        return [var]
+    return []
 
 # COMPILE COMMANDS
 class BuildJob(object):
@@ -135,32 +137,55 @@ class BuildJob(object):
             self.runner.set_env("pkg_cmake_build_tool", "Unix Makefiles")
             self.runner.set_env("pkg_build_tool", "make")
     
-    def run_cmds(self, cmds):
+    def run_cmds(self, cmds, section="", run_path="", paths=[]):
+        if not cmds:
+            return
+        if section:
+            self.runner.section(section)
+        if run_path:
+            _path = expandvars(run_path)
+            if not isdir(_path):
+                self.runner.mkdir(_path)
+            self.runner.chdir(_path)
+        if paths:
+            for p in paths:
+                _path = expandvars(p)
+                if not isdir(_path):
+                    self.runner.mkdir(_path)
+
         for c in cmds:
             self.runner.run(c)
 
     def get_source(self):
-        self.runner.section("GETTING SOURCE CODE") 
-        if not isdir(expandvars(self._src_path)):
-            self.run_cmds(self.source_cmd)
+        if isdir(expandvars(self._src_path)):
+            return
+        self.run_cmds(
+            self.source_cmd,
+            section="GETTING SOURCE CODE",
+            run_path=self._src_path,
+        ) 
 
     def run_configure(self):
-        if isdir(expandvars(self._build_path)):
-            return
-        self.runner.section("RUNNING CONFIGURATION STEPS") 
-        self.runner.mkdir(self._build_path)
-        self.runner.chdir(self._src_path)
-        self.run_cmds(self.configure_cmd)            
+        self.run_cmds(
+            self.configure_cmd,
+            section="RUNNING CONFIGURATION STEPS",
+            run_path=self._src_path,
+            paths=[self._build_path]
+        )
 
     def run_build(self):
-        self.runner.section("RUNNING BUILD STEPS") 
-        self.runner.chdir(self._build_path)
-        self.run_cmds(self.build_cmd) 
+        self.run_cmds(
+            self.build_cmd,
+            section="RUNNING BUILD STEPS",
+            run_path=self._build_path
+        )
 
     def run_install(self):
-        self.runner.section("RUNNING INSTALL STEPS") 
-        self.runner.chdir(self._build_path)
-        self.run_cmds(self.install_cmd)
+        self.run_cmds(
+            self.install_cmd,
+            section="RUNNING INSTALL STEPS",
+            run_path=self._build_path
+        )
 
     def generate_modfiles(self):
         if not "USER_MODFILES" in ENV.keys():

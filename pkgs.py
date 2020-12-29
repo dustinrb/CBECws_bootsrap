@@ -153,7 +153,6 @@ def git(version="2.29.2"):
     return BuildJob(
         "git",
         version,
-        required_build_pkgs=["cmake"],
         source_cmd="git clone --branch v$pkg_version https://github.com/git/git.git $pkg_src",
         configure_cmd="",
         build_cmd="make -C $pkg_src prefix=$pkg_install_path -j $nprocs",
@@ -194,3 +193,20 @@ def ninja(version="1.10.2"):
             "unzip $pkg_src/ninja-linux.zip -d $pkg_install_path/bin/"
         ]
     ) 
+
+
+def task_spooler(version="1.0.1"):
+    tar_name = "ts-{}.tar.gz".format(version)
+    url = "https://vicerveza.homeunix.net/~viric/soft/ts/{}".format(tar_name)
+    return BuildJob(
+        "task_spooler",
+        version,
+        source_cmd=[
+            "wget {} -P $pkg_src".format(url),
+            "tar -xf $pkg_src/{} -C $pkg_src".format(tar_name),
+            "rm -rf $pkg_src/{}".format(tar_name)
+        ],
+        configure_cmd="",
+        build_cmd="make -C $pkg_src/ts-$pkg_version PREFIX=$pkg_install_path -j $nprocs",
+        install_cmd="make -C $pkg_src/ts-$pkg_version PREFIX=$pkg_install_path install"
+    )
