@@ -60,7 +60,7 @@ class BuildJob(object):
         self.required_build_pkgs = required_build_pkgs
         self.runner=runner
 
-    def run(self):
+    def setup(self):
         # Setup the configuration file
         self.check_setup()
 
@@ -77,11 +77,24 @@ class BuildJob(object):
 
         self.create_env()
 
+    def source(self):
+        self.setup()
         self.get_source()
+
+    def configure(self):
+        self.source()
         self.run_configure()
+    
+    def build(self):
+        self.configure()
         self.run_build()
+
+    def install(self):
+        self.build()
         self.run_install()
         self.generate_modfiles()
+
+    def run(self):
         self.runner.run_job()
 
     def check_setup(self):

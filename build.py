@@ -38,5 +38,6 @@ if __name__ == "__main__":
     else:
         builder.runner = PrintRunner()
 
+    builder.install()
     builder.run()
     print("BUILDING {} IS COMPLETE!".format(pkg))
