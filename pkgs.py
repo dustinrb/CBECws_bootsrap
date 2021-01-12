@@ -24,6 +24,8 @@ def clangd(version="11.0.0"):
             "-DLLVM_INCLUDE_BENCHMARKS=OFF "
             "$pkg_src/llvm"
         ],
+        build_cmd="cmake --build . -j $nprocs --target clangd",
+        install_cmd="cmake --install $pkg_build_path --component clangd"
     )
 
 def eigen(version="3.3.9"):
@@ -31,8 +33,7 @@ def eigen(version="3.3.9"):
         "eigen",
         version,
         required_build_pkgs=["cmake"],
-        source_cmd="git clone --branch $pkg_version https://gitlab.com/libeigen/eigen.git $pkg_src",
-        configure_cmd="cmake -B $pkg_build_path -G\"$pkg_cmake_build_tool\" -DCMAKE_INSTALL_PREFIX=$pkg_install_path $pkg_src",
+        source_cmd="git clone --branch $pkg_version https://gitlab.com/libeigen/eigen.git $pkg_src"
     )
 
 
@@ -70,6 +71,22 @@ def gcc_compatibility(version="7.3"):
         configure_cmd="",
         build_cmd="",
         install_cmd=""
+    )
+
+def libint(version="2.6.0"):
+    base_folder = "libint-{version}".format(version=version)
+    tar_file = "{}.tgz".format(base_folder)
+    url = "https://github.com/evaleev/libint/releases/download/v{version}/{tf}".format(version=version, tf=tar_file)
+
+    return BuildJob(
+        "libint",
+        version,
+        source_cmd=[
+            "wget {} -P $pkg_src".format(url),
+            "tar -xf $pkg_src/{} -C $pkg_src".format(tar_file),
+            "rm -rf $pkg_src/{}".format(tar_file),
+            "mv $pkg_src/{}/* ./".format(base_folder)
+        ]
     )
 
 def qcaux(version="trunk"):
@@ -121,6 +138,18 @@ def qchem(version="trunk"):
         required_pkgs=["intel", "mkl"],
         required_build_pkgs=["cmake"],
     )
+
+
+def qchem_test(version="trunk"):
+    return BuildJob(
+        "qchem_test",
+        version,
+        source_cmd="",
+        configure_cmd="",
+        build_cmd="",
+        install_cmd="",
+        required_pkgs=["intel", "mkl"],
+    )    
 
 
 def qchem_dailyref(version="trunk"):

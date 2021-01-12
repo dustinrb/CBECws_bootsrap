@@ -30,8 +30,8 @@ def listify(var):
 # COMPILE COMMANDS
 class BuildJob(object):
     source_cmd=["mkdir -p $pkg_source_path"]
-    configure_cmd=[""]
-    build_cmd=["cmake --build $pkg_build_path -- -j $nprocs"]
+    configure_cmd=["cmake -G\"$pkg_cmake_build_tool\" -B $pkg_build_path -DCMAKE_INSTALL_PREFIX=$pkg_install_path $pkg_src"]
+    build_cmd=["cmake --build $pkg_build_path -j $nprocs"]
     install_cmd=["cmake --install $pkg_build_path"]
 
     def __init__(
