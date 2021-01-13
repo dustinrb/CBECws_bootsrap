@@ -1,10 +1,72 @@
-from BuildRunner import BuildRunner, PrintRunner, BashRunner
-from BuildJob import BuildJob
-from LMod import is_loaded
+from copy import copy
+from invoke import Task, task
+
+from tasks.build.BuildRunner import BashRunner, PrintRunner
+from tasks.build.BuildJob import BuildJob
+from tasks.build.LMod import is_loaded
 
 
-def clangd(version="11.0.0"):
-    return BuildJob(
+INSTALL_KWARGS = [
+    "source",
+    "configure",
+    "build",
+    "install",
+]
+
+class BuildTask(Task):
+
+    def argspec(self, body):
+        """
+            Adds additional build args to control how things are built
+        """
+        arg_names, spec_dict = super().argspec(body)
+        
+        self._org_arg_names = copy(arg_names)
+
+        for a in INSTALL_KWARGS:
+            arg_names.append(a)
+            spec_dict[a] = False
+        return arg_names, spec_dict
+
+
+    def __call__(self, *args, **kwargs):
+        # Get a copy of the compile options
+        build_args = {k: v for k, v in kwargs.items() if k in INSTALL_KWARGS}
+        for a in INSTALL_KWARGS:
+            del kwargs[a]
+
+        job = super().__call__(*args, **kwargs)
+        ctx = args[0]
+
+        if not any(build_args.values()):
+            job.runner = PrintRunner()
+            job.install()
+            job.run()
+        else:
+            job.runner = BashRunner()
+            if build_args["install"]:
+                job.install()
+            elif build_args["configure"]:
+                job.install()
+            elif build_args["build"]:
+                job.build()
+            elif build_args["source"]:
+                job.source()
+
+            job.run()
+
+
+def build_task(*args, **kwargs):
+    kwargs.setdefault("klass", BuildTask)
+    return task(*args, **kwargs) 
+
+
+@build_task
+def clangd(ctx, version="11.0.0", type="install"):
+    """
+    clangd -- Used for vscode clangd completion on CBEC computers
+    """
+    job = BuildJob(
         "clangd",
         version,
         required_build_pkgs=["cmake", "gcc"],
@@ -28,7 +90,12 @@ def clangd(version="11.0.0"):
         install_cmd="cmake --install $pkg_build_path --component clangd"
     )
 
-def eigen(version="3.3.9"):
+
+@build_task
+def eigen(ctx, version="3.3.9"):
+    """
+    eigen -- Header library for matrix operations
+    """
     return BuildJob(
         "eigen",
         version,
@@ -37,7 +104,11 @@ def eigen(version="3.3.9"):
     )
 
 
-def fish(version="3.1.2"):
+@build_task
+def fish(ctx, version="3.1.2"):
+    """
+    fish -- Shell that is vastly better than bash
+    """
     return BuildJob(
         "fish",
         version,
@@ -47,7 +118,11 @@ def fish(version="3.1.2"):
     )
 
 
-def fragment(version="master"):
+@build_task
+def fragment(ctx, version="master"):
+    """
+    fragment -- Original verion of fragment. For legacy
+    """
     return BuildJob(
         "fragment",
         version,
@@ -63,7 +138,11 @@ def fragment(version="master"):
     )
 
 
-def gcc_compatibility(version="7.3"):
+@build_task
+def gcc_compatibility(ctx, version="7.3"):
+    """
+    gcc_compatibility -- Makes newer GCC libs available while having Intel compilers loaded
+    """
     return BuildJob(
         "gcc_compatibility",
         version,
@@ -73,7 +152,12 @@ def gcc_compatibility(version="7.3"):
         install_cmd=""
     )
 
-def libint(version="2.6.0"):
+
+@build_task
+def libint(ctx, version="2.6.0"):
+    """
+    libint -- Integral library for QChem and CP2K
+    """
     base_folder = "libint-{version}".format(version=version)
     tar_file = "{}.tgz".format(base_folder)
     url = "https://github.com/evaleev/libint/releases/download/v{version}/{tf}".format(version=version, tf=tar_file)
@@ -89,7 +173,12 @@ def libint(version="2.6.0"):
         ]
     )
 
-def qcaux(version="trunk"):
+
+@build_task
+def qcaux(ctx, version="trunk"):
+    """
+    qcaux -- basis set definitions for QChem
+    """
     return BuildJob(
         "qcaux",
         version,
@@ -103,7 +192,11 @@ def qcaux(version="trunk"):
     ) 
 
 
-def qchem(version="trunk"):
+@build_task
+def qchem(ctx, version="trunk"):
+    """
+    qchem -- QChem software package. Clones from SVN
+    """
     SVN_ROOT = "https://jubilee.q-chem.com/svnroot/qchem"
 
     # Choose the correct branching information 
@@ -140,7 +233,11 @@ def qchem(version="trunk"):
     )
 
 
-def qchem_test(version="trunk"):
+@build_task
+def qchem_test(ctx, version="trunk"):
+    """
+    qchem_test -- dummy package which installs modfile to enable testing qchem without loading the executables
+    """
     return BuildJob(
         "qchem_test",
         version,
@@ -152,7 +249,11 @@ def qchem_test(version="trunk"):
     )    
 
 
-def qchem_dailyref(version="trunk"):
+@build_task
+def qchem_dailyref(ctx, version="trunk"):
+    """
+    qchem_dailyref -- test file reference values for qchem
+    """
     SVN_ROOT = "https://jubilee.q-chem.com/svnroot/qchem_dailyref"
 
     # Choose the correct branching information 
@@ -178,7 +279,11 @@ def qchem_dailyref(version="trunk"):
     )
 
 
-def git(version="2.29.2"):
+@build_task
+def git(ctx, version="2.29.2"):
+    """
+    git -- newer version of git needed for VSCode
+    """
     return BuildJob(
         "git",
         version,
@@ -189,7 +294,11 @@ def git(version="2.29.2"):
     )
 
 
-def julia(version="1.5.3"):
+@build_task
+def julia(ctx, version="1.5.3"):
+    """
+    julia -- Julia programming language
+    """
     v_parts = version.split('.')
     short_version = ".".join(v_parts[0:-1])
 
@@ -209,7 +318,11 @@ def julia(version="1.5.3"):
     )
 
 
-def ninja(version="1.10.2"):
+@build_task
+def ninja(ctx, version="1.10.2"):
+    """
+    ninja -- speedy (and silent) build tool which eased QChem compilation
+    """
     return BuildJob(
         "ninja",
         version,
@@ -224,7 +337,11 @@ def ninja(version="1.10.2"):
     ) 
 
 
-def task_spooler(version="1.0.1"):
+@build_task
+def task_spooler(ctx, version="1.0.1"):
+    """
+    task_spooler -- task manger for CBEC computers
+    """
     tar_name = "ts-{}.tar.gz".format(version)
     url = "https://vicerveza.homeunix.net/~viric/soft/ts/{}".format(tar_name)
     return BuildJob(

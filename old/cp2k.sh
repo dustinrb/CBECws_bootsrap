@@ -1,1 +1,0 @@
-source $TOOLCHAIN_PATH/load.sh devel

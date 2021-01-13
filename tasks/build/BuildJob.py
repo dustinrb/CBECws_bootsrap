@@ -3,8 +3,8 @@ import datetime
 from os import environ as ENV, error
 from os.path import dirname, isdir, isfile, expandvars, relpath, join as pathjoin
 
-from BuildRunner import BuildRunner
-from LMod import is_loaded
+from tasks.build.BuildRunner import BuildRunner
+from tasks.build.LMod import is_loaded
 
 REQUIRED_ENV = [ 
     "SRC_PATH",
