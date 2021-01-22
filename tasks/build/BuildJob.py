@@ -204,13 +204,17 @@ class BuildJob(object):
         if not "USER_MODFILES" in ENV.keys():
             self.runner.log("Define the USER_MODFILES environment variable to enable modfile creation")
             return
-        modfiles = pathjoin(dirname(__file__), "modfiles")
+        modfiles = pathjoin("$BUILD_SCRIPTS", "modfiles")
         # TODO: Dynamic jodfile generation
         modfile_script = pathjoin(modfiles, "{}.lua".format(self.package)) 
-        final_dir = pathjoin(ENV["USER_MODFILES"], self.package)
+        final_dir = pathjoin("$USER_MODFILES", self.package)
         final_script = pathjoin(final_dir, "{}.lua".format(self.version))
-        if not isfile(modfile_script) or isfile(expandvars(final_script)):
-            # TODO: Raise error? or is this not vital?
+        if not isfile(expandvars(modfile_script)) or isfile(expandvars(final_script)):
+            if not isfile(expandvars(final_script)):
+                self.runner.log("No modfile exists for {}; expected at {}".format(
+                    self.package,
+                    modfile_script
+                ))
             return
 
         self.runner.section("LINKING TO MODFILE") 

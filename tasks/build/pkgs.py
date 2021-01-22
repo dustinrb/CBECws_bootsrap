@@ -36,6 +36,7 @@ class BuildTask(Task):
             del kwargs[a]
 
         job = super().__call__(*args, **kwargs)
+        assert type(job) == BuildJob
         ctx = args[0]
 
         if not any(build_args.values()):
@@ -47,12 +48,11 @@ class BuildTask(Task):
             if build_args["install"]:
                 job.install()
             elif build_args["configure"]:
-                job.install()
+                job.configure()
             elif build_args["build"]:
                 job.build()
             elif build_args["source"]:
                 job.source()
-
             job.run()
 
 
@@ -62,11 +62,23 @@ def build_task(*args, **kwargs):
 
 
 @build_task
-def clangd(ctx, version="11.0.0", type="install"):
+def armadillo(ctx, version="10.2.x"):
+    """
+    C++ matrix library in headers
+    """
+    return BuildJob(
+        "armadillo",
+        version,
+        source_cmd="git clone --branch $pkg_version https://gitlab.com/conradsnicta/armadillo-code.git $pkg_src"
+    )
+
+
+@build_task
+def clangd(ctx, version="11.0.1", type="install"):
     """
     clangd -- Used for vscode clangd completion on CBEC computers
     """
-    job = BuildJob(
+    return BuildJob(
         "clangd",
         version,
         required_build_pkgs=["cmake", "gcc"],
@@ -76,7 +88,8 @@ def clangd(ctx, version="11.0.0", type="install"):
             "CC=gcc CXX=g++ cmake -G\"$pkg_cmake_build_tool\" "
             "-B $pkg_build_path "
             "-DCMAKE_INSTALL_PREFIX=$pkg_install_path "
-            "-DLLVM_ENABLE_PROJECTS='clang;clang-tools-extra' "
+            "-DCMAKE_CXX_LINK_FLAGS=-Wl,-rpath,/opt/modules/gcc/7.3/lib64 -L/opt/modules/gcc/7.3/lib64 "
+            "-DLLVM_ENABLE_PROJECTS='clang;clang-tools-extra;libcxx;libcxxabi' "
             "-DLLVM_TARGETS_TO_BUILD=\"X86\" "
             "-DCMAKE_BUILD_TYPE=Release "
             "-DLLVM_BUILD_EXAMPLES=OFF " 
@@ -84,10 +97,11 @@ def clangd(ctx, version="11.0.0", type="install"):
             "-DLLVM_BUILD_TESTS=OFF "
             "-DLLVM_INCLUDE_TESTS=OFF "
             "-DLLVM_INCLUDE_BENCHMARKS=OFF "
-            "$pkg_src/llvm"
+            "-DLLVM_TEMPORARILY_ALLOW_OLD_TOOLCHAIN=YES "
+            "$pkg_src/llvm "
         ],
-        build_cmd="cmake --build . -j $nprocs --target clangd",
-        install_cmd="cmake --install $pkg_build_path --component clangd"
+        build_cmd="cmake --build . -j $nprocs",
+        install_cmd="cmake --install $pkg_build_path"
     )
 
 
@@ -138,19 +152,19 @@ def fragment(ctx, version="master"):
     )
 
 
-@build_task
-def gcc_compatibility(ctx, version="7.3"):
-    """
-    gcc_compatibility -- Makes newer GCC libs available while having Intel compilers loaded
-    """
-    return BuildJob(
-        "gcc_compatibility",
-        version,
-        source_cmd="mkdir -p $pkg_src",
-        configure_cmd="",
-        build_cmd="",
-        install_cmd=""
-    )
+# @build_task
+# def gcc_compatibility(ctx, version="7.3"):
+#     """
+#     gcc_compatibility -- Makes newer GCC libs available while having Intel compilers loaded
+#     """
+#     return BuildJob(
+#         "gcc_compatibility",
+#         version,
+#         source_cmd="mkdir -p $pkg_src",
+#         configure_cmd="",
+#         build_cmd="",
+#         install_cmd=""
+#     )
 
 
 @build_task
@@ -315,6 +329,18 @@ def julia(ctx, version="1.5.3"):
             "mkdir -p $pkg_install_path",
             "tar -xf $pkg_src/julia-$pkg_version-linux-x86_64.tar.gz -C $pkg_install_path"
         ]
+    )
+
+
+@build_task
+def libefp(ctx, version="1.5.0"):
+    """
+    libefp -- a speedy semi-emperical library of nonsense
+    """
+    return BuildJob(
+        "libefp",
+        version,
+        source_cmd="git clone --branch $pkg_version https://github.com/ilyak/libefp.git $pkg_src"
     )
 
 

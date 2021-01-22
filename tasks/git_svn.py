@@ -88,6 +88,8 @@ def refresh_externals(ctx, path=None):
 
     This does not remove extranious external repos?
     Maybe clone to .git directory and create symbolic links
+
+    TODO: Check out only the needed version
     """
     path = path or os.getcwd()
     path = os.path.abspath(path)
@@ -109,6 +111,7 @@ def refresh_externals(ctx, path=None):
 
             out_path = os.path.join(path, prefix, out_path)
             create_external(ctx, url, out_path, rev=rev)
+        return 
 
 
 def get_externals(ctx):
@@ -130,18 +133,19 @@ def get_externals(ctx):
     return externals
 
 
-def create_external(ctx, url, destination, rev=None):
+def create_external(ctx, url, destination, rev):
     repo_name = destination.split("/")[-1] # Get the folder we will be outputing
     source_path = os.path.abspath(
-        os.path.join(".", ".git", "externals", repo_name)
+        os.path.join(".", ".git", "svn-externals", repo_name)
     )
 
     old_cwd = os.getcwd()
     if not os.path.exists(source_path):
         print("Cloning external {}".format(url))
-        ctx.run("git svn clone {url} {path}".format(
+        ctx.run("git svn clone -r{rev} {url} {path}".format(
             url=url,
-            path=source_path
+            path=source_path,
+            rev=rev
         ))
     os.chdir(source_path)
     commit = ctx.run("git svn find-rev r{}".format(rev), hide=True).stdout
