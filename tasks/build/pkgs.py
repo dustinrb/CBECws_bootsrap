@@ -74,22 +74,21 @@ def armadillo(ctx, version="10.2.x"):
 
 
 @build_task
-def clangd(ctx, version="11.0.1", type="install"):
+def clang(ctx, version="11.0.1"):
     """
     clangd -- Used for vscode clangd completion on CBEC computers
     """
     return BuildJob(
-        "clangd",
+        "clang",
         version,
         required_build_pkgs=["cmake", "gcc"],
-        required_pkgs=["gcc_compatibility"],
         source_cmd="git clone --branch llvmorg-$pkg_version https://github.com/llvm/llvm-project.git $pkg_src",
         configure_cmd=[
             "CC=gcc CXX=g++ cmake -G\"$pkg_cmake_build_tool\" "
             "-B $pkg_build_path "
             "-DCMAKE_INSTALL_PREFIX=$pkg_install_path "
             "-DCMAKE_CXX_LINK_FLAGS=-Wl,-rpath,/opt/modules/gcc/7.3/lib64 -L/opt/modules/gcc/7.3/lib64 "
-            "-DLLVM_ENABLE_PROJECTS='clang;clang-tools-extra;libcxx;libcxxabi' "
+            "-DLLVM_ENABLE_PROJECTS='clang;clang-tools-extra;libcxx;libcxxabi;openmp;parallel-libs;' "
             "-DLLVM_TARGETS_TO_BUILD=\"X86\" "
             "-DCMAKE_BUILD_TYPE=Release "
             "-DLLVM_BUILD_EXAMPLES=OFF " 
@@ -103,6 +102,8 @@ def clangd(ctx, version="11.0.1", type="install"):
         build_cmd="cmake --build . -j $nprocs",
         install_cmd="cmake --install $pkg_build_path"
     )
+    
+    # TODO: Create mathod for adding clangd wrapper
 
 
 @build_task
@@ -119,7 +120,7 @@ def eigen(ctx, version="3.3.9"):
 
 
 @build_task
-def fish(ctx, version="3.1.2"):
+def fish(ctx, version="3.3.1"):
     """
     fish -- Shell that is vastly better than bash
     """
@@ -231,12 +232,13 @@ def qchem(ctx, version="trunk"):
         version,
         source_cmd="svn co {} $pkg_src".format(source_url),
         configure_cmd=[
-            "QCBUILD=$pkg_rel_src_to_build ./configure intel mkl openmp relwdeb nointracule nomgc nodmrg noccman2 {btf} --prefix=$pkg_install_path".format(btf=build_tool_flag)
+            "QCBUILD=$pkg_rel_src_to_build "
+            "./configure intel mkl openmp relwdeb nointracule nomgc noccman2 "
+            "{btf} --prefix=$pkg_install_path".format(btf=build_tool_flag)
         ],
         build_cmd=[
             "cmake -B $pkg_build_path -DCMAKE_EXPORT_COMPILE_COMMANDS=YES $pkg_src",
-            "cmake --build $pkg_build_path -- -j $nprocs",
-            "clangify_compile_commands.py $pkg_build_path/compile_commands.json > $pkg_src/compile_commands.json",
+            "cmake --build $pkg_build_path --target qcprog.exe -- -j $nprocs"
         ],
         install_cmd=[
             "cmake --install $pkg_build_path",
@@ -342,6 +344,27 @@ def libefp(ctx, version="1.5.0"):
         version,
         source_cmd="git clone --branch $pkg_version https://github.com/ilyak/libefp.git $pkg_src"
     )
+
+
+@build_task
+def mopac(ctx, version="2016"):
+    """
+    MOPAC -- A semi-emperical QM backend
+    """
+    zip_name = "MOPAC2016_for_Linux_64_bit.zip"
+
+    return BuildJob(
+        "mopac",
+        version,
+        source_cmd=f"wget http://openmopac.net/{zip_name} -P $pkg_src",
+        configure_cmd="",
+        build_cmd="",
+        install_cmd=[
+            "mkdir -p $pkg_install_path/bin",
+            f"unzip $pkg_src/{zip_name} -d $pkg_install_path/bin/",
+            "chmod u+x $pkg_install_path/bin/MOPAC2016.exe"
+        ]
+    ) 
 
 
 @build_task
