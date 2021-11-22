@@ -241,7 +241,12 @@ def qchem(ctx, version="trunk"):
             "cmake --build $pkg_build_path --target qcprog.exe -- -j $nprocs"
         ],
         install_cmd=[
-            "cmake --install $pkg_build_path",
+            "mkdir -p $pkg_install_path/exe",
+            # Manually install qcexe
+            "cp $pkg_build_path/qcprog.dbg $pkg_install_path/exe",
+            "cp $pkg_build_path/qcprog.exe $pkg_install_path/exe",
+            "cp $pkg_build_path/bin $pkg_install_path",
+            # "cmake --install $pkg_build_path",
             "[[ ! -L $pkg_install_path/bin/mpi ]] && ln -s $pkg_src/bin/mpi $pkg_install_path/bin/mpi"
         ],
         required_pkgs=["intel", "mkl"],
