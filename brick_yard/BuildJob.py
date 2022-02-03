@@ -1,24 +1,23 @@
-import datetime
+from os import environ
+from os.path import expandvars, isdir, isfile
+from os.path import join as pathjoin
+from os.path import relpath
 
-from os import environ as ENV, error
-from os.path import dirname, isdir, isfile, expandvars, relpath, join as pathjoin
-
-from tasks.build.BuildRunner import BuildRunner
-from tasks.build.LMod import is_loaded
-
-REQUIRED_ENV = [ 
-    "SRC_PATH",
+CORE_ENV = [
+    "SOURCE_PATH",
     "ENV_PATH",
     "BUILD_PATH",
-    "BUILD_SCRIPTS" # Path to this package
+    "USER_MODFILES",
+    "BUILD_SCRIPTS",  # Path to this package
 ]
 
 # Support functions
-def is_env_setup(required=REQUIRED_ENV):
-    for r in required:
-        if not r in ENV.keys():
+def is_env_setup(required=CORE_ENV):
+    for r in CORE_ENV:
+        if not r in environ.keys():
             return False
     return True
+
 
 def listify(var):
     if isinstance(var, list):
@@ -27,13 +26,9 @@ def listify(var):
         return [var]
     return []
 
-# COMPILE COMMANDS
-class BuildJob(object):
-    source_cmd=["mkdir -p $pkg_source_path"]
-    configure_cmd=["cmake -G\"$pkg_cmake_build_tool\" -B $pkg_build_path -DCMAKE_INSTALL_PREFIX=$pkg_install_path $pkg_src"]
-    build_cmd=["cmake --build $pkg_build_path -j $nprocs"]
-    install_cmd=["cmake --install $pkg_build_path"]
 
+# COMPILE COMMANDS
+class RecipeRunner(object):
     def __init__(
         self,
         package,
@@ -44,7 +39,7 @@ class BuildJob(object):
         install_cmd=None,
         required_pkgs=[],
         required_build_pkgs=[],
-        runner=None
+        runner=None,
     ):
         self.package = package
         self.version = version
@@ -58,22 +53,17 @@ class BuildJob(object):
             self.install_cmd = listify(install_cmd)
         self.required_pkgs = required_pkgs
         self.required_build_pkgs = required_build_pkgs
-        self.runner=runner
+        self.runner = runner
 
     def setup(self):
         # Setup the configuration file
         self.check_setup()
 
-        self.runner.add_front_matter(
-            "PACKAGE:\t{}".format(self.package))
-        self.runner.add_front_matter(
-            "VERSION:\t{}".format(self.version))
-        self.runner.add_front_matter(
-            "SRC_PATH:\t{}".format(ENV["SRC_PATH"]))
-        self.runner.add_front_matter(
-            "BUILD_PATH:\t{}".format(ENV["BUILD_PATH"]))
-        self.runner.add_front_matter(
-            "ENV_PATH:\t{}".format(ENV["ENV_PATH"]))
+        self.runner.add_front_matter("PACKAGE:\t{}".format(self.package))
+        self.runner.add_front_matter("VERSION:\t{}".format(self.version))
+        self.runner.add_front_matter("SRC_PATH:\t{}".format(ENV["SRC_PATH"]))
+        self.runner.add_front_matter("BUILD_PATH:\t{}".format(ENV["BUILD_PATH"]))
+        self.runner.add_front_matter("ENV_PATH:\t{}".format(ENV["ENV_PATH"]))
 
         self.create_env()
 
@@ -84,7 +74,7 @@ class BuildJob(object):
     def configure(self):
         self.source()
         self.run_configure()
-    
+
     def build(self):
         self.configure()
         self.run_build()
@@ -102,23 +92,27 @@ class BuildJob(object):
             raise error("Specify a Runner")
 
         if not is_env_setup():
-            raise error("Environment is not properly setup. The following environment variables are required: {}".format(
-                " ".format(REQUIRED_ENV)
-            ))
+            raise error(
+                "Environment is not properly setup. The following environment variables are required: {}".format(
+                    " ".format(REQUIRED_ENV)
+                )
+            )
 
         build_recs = [is_loaded(i) for i in self.required_build_pkgs]
         if not all(build_recs):
             raise error(
                 "Make sure that the following build requirements are loaded: {}".format(
                     " ".join(self.required_build_pkgs)
-                ))
+                )
+            )
 
         recs = [is_loaded(i) for i in self.required_pkgs]
         if not all(recs):
             raise error(
                 "Make sure that the following runtime requirements are loaded: {}".format(
                     " ".join(self.required_pkgs)
-                ))
+                )
+            )
 
     def create_env(self):
         self._src_path = pathjoin("$SRC_PATH", self.package, self.version)
@@ -127,16 +121,14 @@ class BuildJob(object):
 
         # Make relative paths avaiable (looking at your q-chem)
         self._rel_src_to_build = relpath(
-            expandvars(self._build_path),
-            start=expandvars(self._src_path)
+            expandvars(self._build_path), start=expandvars(self._src_path)
         )
         self._rel_build_to_install = relpath(
-            expandvars(self._install_path),
-            start=expandvars(self._build_path)
+            expandvars(self._install_path), start=expandvars(self._build_path)
         )
-        
+
         self.runner.set_env("pkg_name", self.package)
-        self.runner.set_env("pkg_version", self.version) 
+        self.runner.set_env("pkg_version", self.version)
         self.runner.set_env("pkg_src", self._src_path)
         self.runner.set_env("pkg_build_path", self._build_path)
         self.runner.set_env("pkg_install_path", self._install_path)
@@ -149,7 +141,7 @@ class BuildJob(object):
         else:
             self.runner.set_env("pkg_cmake_build_tool", "Unix Makefiles")
             self.runner.set_env("pkg_build_tool", "make")
-    
+
     def run_cmds(self, cmds, section="", run_path="", paths=[]):
         if not cmds:
             return
@@ -176,48 +168,46 @@ class BuildJob(object):
             self.source_cmd,
             section="GETTING SOURCE CODE",
             run_path=self._src_path,
-        ) 
+        )
 
     def run_configure(self):
         self.run_cmds(
             self.configure_cmd,
             section="RUNNING CONFIGURATION STEPS",
             run_path=self._src_path,
-            paths=[self._build_path]
+            paths=[self._build_path],
         )
 
     def run_build(self):
         self.run_cmds(
-            self.build_cmd,
-            section="RUNNING BUILD STEPS",
-            run_path=self._build_path
+            self.build_cmd, section="RUNNING BUILD STEPS", run_path=self._build_path
         )
 
     def run_install(self):
         self.run_cmds(
-            self.install_cmd,
-            section="RUNNING INSTALL STEPS",
-            run_path=self._build_path
+            self.install_cmd, section="RUNNING INSTALL STEPS", run_path=self._build_path
         )
 
     def generate_modfiles(self):
         if not "USER_MODFILES" in ENV.keys():
-            self.runner.log("Define the USER_MODFILES environment variable to enable modfile creation")
+            self.runner.log(
+                "Define the USER_MODFILES environment variable to enable modfile creation"
+            )
             return
         modfiles = pathjoin("$BUILD_SCRIPTS", "modfiles")
         # TODO: Dynamic jodfile generation
-        modfile_script = pathjoin(modfiles, "{}.lua".format(self.package)) 
+        modfile_script = pathjoin(modfiles, "{}.lua".format(self.package))
         final_dir = pathjoin("$USER_MODFILES", self.package)
         final_script = pathjoin(final_dir, "{}.lua".format(self.version))
         if not isfile(expandvars(modfile_script)) or isfile(expandvars(final_script)):
             if not isfile(expandvars(final_script)):
-                self.runner.log("No modfile exists for {}; expected at {}".format(
-                    self.package,
-                    modfile_script
-                ))
+                self.runner.log(
+                    "No modfile exists for {}; expected at {}".format(
+                        self.package, modfile_script
+                    )
+                )
             return
 
-        self.runner.section("LINKING TO MODFILE") 
+        self.runner.section("LINKING TO MODFILE")
         self.runner.mkdir(final_dir)
         self.runner.run("ln -s {} {}".format(modfile_script, final_script))
-        

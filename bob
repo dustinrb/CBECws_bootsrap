@@ -1,0 +1,125 @@
+#!/usr/bin/python3
+
+import argparse
+from importlib import import_module
+from os import environ
+from sys import argv
+
+from brick_yard.builder import (CORE_ENV, BashRunner, PrintRunner, build_bp,
+                                get_global_env, remove_bp, update_bp)
+
+
+def check_env():
+    for env in CORE_ENV:
+        if env not in environ:
+            print("These environment variables must be set for Bob to work:")
+            for env in CORE_ENV:
+                print(f"  {env}:\t{environ.get(env, '')}")
+
+
+def list_packages():
+    from pathlib import Path
+
+    import blue_prints
+
+    print("Available packages:")
+
+    bp_path = Path(blue_prints.__file__).parents[0]
+    for f in bp_path.iterdir():
+        name = f.name
+        if name.startswith("__"):
+            continue
+        if name == "old.py":
+            continue
+        print("  " + f.name[0:-3])
+    exit()
+
+
+def install_package(
+    pkg: str, install: bool, update: bool, uninstall: bool, run_build: bool
+):
+    # Parse out the name version
+    parts = pkg.split("/")
+
+    if len(parts) == 1:
+        pkg_name = parts[0]
+        version = None
+    else:
+        pkg_name, version = parts
+
+    package_class = getattr(import_module("blue_prints." + pkg_name), pkg_name)
+
+    env = get_global_env()
+    package = package_class(env, version=version)
+
+    if run_build:
+        runner = BashRunner()
+    else:
+        runner = PrintRunner()
+
+    if uninstall:
+        resp = input(f"Uninstall {package.name}/{package.version} (y, [n])?: ")
+        remove = resp.lower().startswith("y")
+        if remove:
+            remove_bp(package, runner)
+        else:
+            return
+
+    if update:
+        update_bp(package, runner)
+
+    if install:
+        build_bp(package, runner)
+
+    if any([install, update, uninstall]):
+        return runner.run_job()
+    else:
+        print(
+            "Nothing to do. Use `--install`, `--update`, and `--uninstall` to tell Bob what to do."
+        )
+
+
+if __name__ == "__main__":
+    # Do this manually because I don't know how to do this with argparse
+    try:
+        if argv[1] == "--list":
+            list_packages()
+    except IndexError:
+        pass
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("packages", nargs="+", help="the packages to have Bob build")
+    parser.add_argument(
+        "--install", action="store_true", help="execute the build script"
+    )
+    parser.add_argument(
+        "--update",
+        action="store_true",
+        help="run the update command (for version controlled software)",
+    )
+    parser.add_argument(
+        "--uninstall",
+        action="store_true",
+        help="remove package and all associated directories",
+    )
+    parser.add_argument(
+        "-r",
+        "--run",
+        action="store_true",
+        help="execute the build/uninstall steps. Will print the associated shell scripts if not provided",
+    )
+    args = parser.parse_args()
+
+    pkg_names: str = args.packages
+    install: bool = args.install
+    update: bool = args.update
+    uninstall: bool = args.uninstall
+    run_build: bool = args.run
+
+    for pkg in pkg_names:
+        install_package(pkg, install, update, uninstall, run_build)
+
+    if not any([install, update, uninstall]):
+        print(
+            "Nothing to do. Use `--install`, `--update`, and `--uninstall` to tell Bob what to do."
+        )

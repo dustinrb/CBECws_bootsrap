@@ -1,6 +1,5 @@
 #! /usr/bin/python3
 import json
-from invoke import task
 
 
 def exclude_fortran(command):
@@ -11,7 +10,6 @@ def exclude_fortran(command):
     return True
 
 
-@task
 def clangify_compile_commands(ctx, path):
     with open(path, "r") as f:
         compile_commands = json.load(f)
