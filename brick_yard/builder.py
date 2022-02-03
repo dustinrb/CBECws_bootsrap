@@ -105,8 +105,8 @@ class BashRunner(BuildRunner):
 
 def get_nprocs():
     # Ad-hock solution for handing supercomputer backends
-    if "SLURM_NTASKS" in environ.keys():
-        return environ["SLURM_NTASKS"]
+    if "SLURM_CPUS_PER_TASK" in environ.keys():
+        return environ["SLURM_CPUS_PER_TASK"]
     if "PBS_NP" in environ.keys():
         return environ["PBS_NP"]
 
