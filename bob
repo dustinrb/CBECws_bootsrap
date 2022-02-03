@@ -10,6 +10,7 @@ from brick_yard.builder import (
     CORE_ENV,
     BashRunner,
     PrintRunner,
+    add_front_matter,
     build_bp,
     get_global_env,
     remove_bp,
@@ -72,6 +73,8 @@ def install_package(
     else:
         runner = PrintRunner()
 
+    add_front_matter(package, runner)
+
     if uninstall:
         resp = input(f"Uninstall {package.name}/{package.version} (y, [n])?: ")
         remove = resp.lower().startswith("y")
@@ -104,12 +107,10 @@ if __name__ == "__main__":
 
     check_env()
     make_paths()
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument("packages", nargs="+", help="the packages to have Bob build")
-    parser.add_argument(
-        "--install", action="store_true", help="execute the build script"
-    )
+    parser.add_argument("--build", action="store_true", help="execute the build script")
     parser.add_argument(
         "--update",
         action="store_true",
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     pkg_names: str = args.packages
-    install: bool = args.install
+    install: bool = args.build  # Changed form install to build for better pun
     update: bool = args.update
     uninstall: bool = args.uninstall
     run_build: bool = args.run

@@ -115,10 +115,10 @@ class BluePrint:
 
 class MakeBluePrint(BluePrint):
     def build(self, env: EnvVars) -> List[str]:
-        return [f"make -C {env.build_path} -j {env.nprocs}"]
+        return [f"make -C {env.source_path} -j {env.nprocs}"]
 
     def install(self, env: EnvVars) -> List[str]:
-        return [f"make -C {env.build_path} prefix={env.install_path} install"]
+        return [f"make -C {env.source_path} prefix={env.install_path} install"]
 
 
 class AutoToolsBluePrint(MakeBluePrint):
@@ -127,6 +127,12 @@ class AutoToolsBluePrint(MakeBluePrint):
             f"cd {env.build_path}",
             f"{env.source_path}/configure --prefix={env.install_path}",
         ]
+
+    def build(self, env: EnvVars) -> List[str]:
+        return [f"make -C {env.build_path} -j {env.nprocs}"]
+
+    def install(self, env: EnvVars) -> List[str]:
+        return [f"make -C {env.build_path} prefix={env.install_path} install"]
 
 
 class CMakeBluePrint(BluePrint):
