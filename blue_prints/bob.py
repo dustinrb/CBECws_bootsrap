@@ -5,7 +5,7 @@ from brick_yard.blue_print import BluePrint, EnvVars
 
 class bob(BluePrint):
     name = "bob"
-    version = "master"
+    version = "the_builder"
 
     def install(self, env: EnvVars) -> List[str]:
         return [

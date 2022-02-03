@@ -3,10 +3,18 @@
 import argparse
 from importlib import import_module
 from os import environ
+from pathlib import Path
 from sys import argv
 
-from brick_yard.builder import (CORE_ENV, BashRunner, PrintRunner, build_bp,
-                                get_global_env, remove_bp, update_bp)
+from brick_yard.builder import (
+    CORE_ENV,
+    BashRunner,
+    PrintRunner,
+    build_bp,
+    get_global_env,
+    remove_bp,
+    update_bp,
+)
 
 
 def check_env():
@@ -15,6 +23,13 @@ def check_env():
             print("These environment variables must be set for Bob to work:")
             for env in CORE_ENV:
                 print(f"  {env}:\t{environ.get(env, '')}")
+
+
+def make_paths():
+    Path(environ["SOURCE_PATH"]).mkdir(exist_ok=True, parents=True)
+    Path(environ["BUILD_PATH"]).mkdir(exist_ok=True, parents=True)
+    Path(environ["ENV_PATH"]).mkdir(exist_ok=True, parents=True)
+    Path(environ["USER_MODFILES"]).mkdir(exist_ok=True, parents=True)
 
 
 def list_packages():
@@ -87,6 +102,9 @@ if __name__ == "__main__":
     except IndexError:
         pass
 
+    check_env()
+    make_paths()
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("packages", nargs="+", help="the packages to have Bob build")
     parser.add_argument(
