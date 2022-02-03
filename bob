@@ -63,7 +63,11 @@ def install_package(
     else:
         pkg_name, version = parts
 
-    package_class = getattr(import_module("blue_prints." + pkg_name), pkg_name)
+    try:
+        package_class = getattr(import_module("blue_prints." + pkg_name), pkg_name)
+    except ModuleNotFoundError:
+        print(f"Unknown package '{pkg_name}'")
+        return
 
     env = get_global_env()
     package = package_class(env, version=version)

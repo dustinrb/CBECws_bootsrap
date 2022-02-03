@@ -124,6 +124,7 @@ class MakeBluePrint(BluePrint):
 class AutoToolsBluePrint(MakeBluePrint):
     def configure(self, env: EnvVars) -> List[str]:
         return [
+            f"mkdir -p {env.build_path}",
             f"cd {env.build_path}",
             f"{env.source_path}/configure --prefix={env.install_path}",
         ]
@@ -140,7 +141,12 @@ class CMakeBluePrint(BluePrint):
 
     def configure(self, env: EnvVars) -> List[str]:
         return [
-            f'cmake -G"{env.cmake_build_tool}" -B ${env.build_path} -DCMAKE_INSTALL_PREFIX=${env.install_path} ${env.source_path}'
+            f"mkdir -p {env.build_path}",
+            f"cd {env.build_path}",
+            f'cmake -G"{env.cmake_build_tool}" -B {env.build_path}'
+            f" -DCMAKE_INSTALL_PREFIX={env.install_path}"
+            f" -DCMAKE_BUILD_TYPE=Release"
+            f" {env.source_path}",
         ]
 
     def build(self, env: EnvVars) -> List[str]:

@@ -4,6 +4,7 @@ from os import environ
 from pathlib import Path
 from shlex import quote
 from subprocess import PIPE
+from typing import List
 
 from brick_yard.blue_print import BluePrint, EnvVars
 from brick_yard.lmod import is_loaded
@@ -18,11 +19,17 @@ CORE_ENV = [
 
 
 class BuildRunner(object):
-    build_scrpt = ""
+    build_script: str
 
-    front_matter = []
-    cmds = []
+    front_matter: List[str]
+    cmds: List[str]
     env: EnvVars
+
+    def __init__(self) -> None:
+        self.build_script = ""
+        self.front_matter = []
+        self.cmds = []
+        self.env = EnvVars()
 
     def set_env(self, env: EnvVars):
         self.env = env
@@ -42,7 +49,7 @@ class BuildRunner(object):
             self.out(cmd)
 
     def out(self, output):
-        self.build_scrpt += output + "\n"
+        self.build_script += output + "\n"
 
     def out_block(self, msg):
         _msg = "#     " + msg + "     #"
@@ -79,7 +86,7 @@ class PrintRunner(BuildRunner):
         self.out("#!/bin/bash")
         self.out("")
         super().run_job()
-        print(self.build_scrpt)
+        print(self.build_script)
         return 0
 
 
@@ -92,7 +99,7 @@ class BashRunner(BuildRunner):
         super().out("#!/bin/bash")
         super().out("set -e")
         super().run_job()
-        proc = subprocess.run(self.build_scrpt, shell=True)
+        proc = subprocess.run(self.build_script, shell=True)
         return proc.returncode
 
 

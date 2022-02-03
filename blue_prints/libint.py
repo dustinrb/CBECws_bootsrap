@@ -9,8 +9,8 @@ class libint(CMakeBluePrint):
     """
 
     name = "libint"
-    version = "3.3.9"
-    required_lmod = ["cmake"]
+    version = "2.7.1"
+    required_lmod = ["cmake", "eigen"]
 
     def source(self, env: EnvVars) -> List[str]:
         env.base_folder = f"libint-{env.version}"
@@ -21,5 +21,5 @@ class libint(CMakeBluePrint):
             f"wget {env.url} -P {env.source_path}",
             f"tar -xf {env.source_path}/{env.tar_file} -C {env.source_path}",
             f"rm -rf {env.source_path}/{env.tar_file}",
-            f"mv {env.source_path}/{env.base_folder}/* ./",
+            f"mv {env.source_path}/{env.base_folder}/* {env.source_path}",
         ]

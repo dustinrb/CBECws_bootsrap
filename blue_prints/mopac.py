@@ -13,7 +13,8 @@ class mopac(BluePrint):
 
     def source(self, env: EnvVars) -> List[str]:
 
-        env.zip_name = f"MOPAC{env.version}_for_Linux_64_bit.zip"
+        # CONNOT DO VAR SUB DUE TO STRING INT. ISSUES
+        env.zip_name = f"MOPAC{self.version}_for_Linux_64_bit.zip"
 
         return [f"wget http://openmopac.net/{env.zip_name} -P {env.source_path}"]
 

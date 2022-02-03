@@ -1,11 +1,10 @@
 from typing import List
 
-from blue_prints.qchem import add_qcsvn_url
 from brick_yard.blue_print import CMakeBluePrint, EnvVars
 
 
 def add_qcsvn_url(env: EnvVars):
-    env.svn_root = f"https://jubilee.q-chem.com/{env.name}"
+    env.svn_root = f"https://jubilee.q-chem.com/svnroot/{env.name}"
 
     if env.get_var("version") == "trunk":
         env.source_url = f"{env.svn_root}/{env.version}"
@@ -20,7 +19,13 @@ class qchem(CMakeBluePrint):
 
     name = "qchem"
     version = "trunk"
-    required_lmod = ["intel", "mkl", "cmake"]
+    required_lmod = [
+        "intel",
+        "mkl",
+        "cmake",
+        "hdf5",
+        "libint",
+    ]
 
     def source(self, env: EnvVars) -> List[str]:
         add_qcsvn_url(env)
@@ -32,14 +37,16 @@ class qchem(CMakeBluePrint):
     def configure(self, env: EnvVars) -> List[str]:
 
         if env.get_var("build_tool") == "ninja":
-            env.qc_build_tool_flag = env.build_tool
+            env.qc_build_tool_flag = "--ninja"
         else:
             env.qc_build_tool_flag = ""
 
         return [
-            "export QCBUILD=`realpath relative-to={env.build_path} {env.source_path}`",
-            # "./configure intel mkl openmp relwdeb nointracule nomgc noccman2 "
-            f"./configure intel mkl openmp rel {env.qc_build_tool_flag} --prefix={env.install_path}",
+            f"mkdir -p {env.build_path}",
+            f"cd {env.build_path}",
+            f"export QCBUILD=`realpath --relative-to={env.source_path} {env.build_path}`",
+            # f"./configure intel mkl openmp relwdeb nointracule nomgc noccman2 "
+            f"{env.source_path}/configure intel mkl openmp release {env.qc_build_tool_flag} --prefix={env.install_path}",
             f"cmake -B {env.build_path} -DCMAKE_EXPORT_COMPILE_COMMANDS=YES {env.source_path}",
         ]
 

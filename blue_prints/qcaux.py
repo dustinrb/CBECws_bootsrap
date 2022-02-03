@@ -15,10 +15,11 @@ class qcaux(BluePrint):
     def source(self, env: EnvVars) -> List[str]:
         add_qcsvn_url(env)
         return [
+            f"mkdir -p {env.source_path}",
             f"svn co {env.source_url} {env.install_path}",
             f"wget https://downloads.q-chem.com/qcinstall/drivers/drivers.linux.tar.gz -P {env.install_path}/",
             f"tar xzf {env.install_path}/drivers.linux.tar.gz -C {env.install_path}",
         ]
 
     def update(self, env: EnvVars) -> List[str]:
-        return ["svn up"]
+        return [f"cd {env.install_path}", "svn up"]
