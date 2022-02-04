@@ -52,10 +52,9 @@ class qchem(CMakeBluePrint):
         ]
 
     def build(self, env: EnvVars) -> List[str]:
-        pass
-        # return [
-        #     f"cmake --build {env.build_path} --target qcprog.exe -- -j {env.nprocs}"
-        # ]
+        return [
+            f"cmake --build {env.build_path} --target qcprog.exe -- -j {env.nprocs}"
+        ]
 
     def install(self, env: EnvVars) -> List[str]:
         return [
