@@ -24,7 +24,6 @@ class qchem(CMakeBluePrint):
         "mkl",
         "cmake",
         "hdf5",
-        "libint",
     ]
 
     def source(self, env: EnvVars) -> List[str]:
