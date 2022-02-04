@@ -19,11 +19,13 @@ class qchem(CMakeBluePrint):
 
     name = "qchem"
     version = "trunk"
+    required_env = [
+        "MKLROOT",
+    ]
     required_lmod = [
         "intel",
-        "mkl",
-        "cmake",
         "hdf5",
+        "cmake",
     ]
 
     def source(self, env: EnvVars) -> List[str]:
@@ -50,16 +52,20 @@ class qchem(CMakeBluePrint):
         ]
 
     def build(self, env: EnvVars) -> List[str]:
-        return [
-            f"cmake --build {env.build_path} --target qcprog.exe -- -j {env.nprocs}"
-        ]
+        pass
+        # return [
+        #     f"cmake --build {env.build_path} --target qcprog.exe -- -j {env.nprocs}"
+        # ]
 
     def install(self, env: EnvVars) -> List[str]:
         return [
             f"mkdir -p {env.install_path}/exe",
             # Manually install qcexe
-            f"cp {env.build_path}/qcprog.dbg {env.install_path}/exe",
+            # Install debug version if we have it
+            f"test -f {env.build_path}/qcprog.dbg && cp {env.build_path}/qcprog.dbg {env.install_path}/exe",
+            # Install the main program
             f"cp {env.build_path}/qcprog.exe {env.install_path}/exe",
+            # And the support scripts
             f"cp -r {env.source_path}/bin {env.install_path}",
-            f"[[ ! -L {env.install_path}/bin/mpi ]] && ln -s {env.source_path}/bin/mpi {env.install_path}/bin/mpi",
+            f"test -d {env.install_path}/bin/mpi || ln -s {env.source_path}/bin/mpi {env.install_path}/bin/mpi",
         ]

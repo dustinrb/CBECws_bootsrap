@@ -4,8 +4,6 @@ local version  = myModuleVersion()
 local pkgName  = myModuleName()
 local pkg_path = pathJoin(env_path,pkgName,version)
 
-prereq("intel", "mkl")
-load("hdf5")
 load("qcaux")
 try_load("qchem_dailyref")
 
