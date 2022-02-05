@@ -23,9 +23,10 @@ class qchem(CMakeBluePrint):
         "MKLROOT",
     ]
     required_lmod = [
-        "intel",
-        "hdf5",
+        "boost",
         "cmake",
+        "hdf5",
+        "intel",
     ]
 
     def source(self, env: EnvVars) -> List[str]:
